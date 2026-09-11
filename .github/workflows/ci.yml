@@ -1,19 +1,19 @@
 name: CI
 
-on:  
+on:
   push:
     branches: [main]
 
 jobs:
-  build_scan_push:
-    runs_on: self-hosted
+  build-scan-push:
+    runs-on: self-hosted
     strategy:
       matrix:
         service: [frontend, backend]
 
     steps:
       - name: Checkout code
-        uses: actions.checkout@v4
+        uses: actions/checkout@v4
 
       - name: Build Docker image
         run: |
@@ -37,6 +37,4 @@ jobs:
 
       - name: Push image to Harbor
         run: |
-         docker push ${{ secrets.HARBOR_URL }}/dashboard/dashboard-${{ matrix.service }}:${{ github.sha }} 
-
-
+          docker push ${{ secrets.HARBOR_URL }}/dashboard/dashboard-${{ matrix.service }}:${{ github.sha }}
