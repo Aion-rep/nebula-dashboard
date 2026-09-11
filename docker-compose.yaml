@@ -1,0 +1,95 @@
+# Under services, we define each container that makes up our application.
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy # The frontend depends on the backend being healthy.
+    networks: [app-network]        # if compose has multiple network it will be in list format 
+    restart: unless-stopped        # if stop unexpectedly automatically start it
+    deploy:
+      resources:                   # Dont allow frontend to consume unlimited cpu, memory
+        limits:
+          cpus: "0.50"
+          memory: 128M
+
+  backend:
+    build: ./backend
+    environment:
+      DB_HOST: ${DB_HOST:-mariadb}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME:-nebula}
+      DB_USER: ${DB_USER:-nebula}
+      DB_PASSWORD: ${DB_PASSWORD:-nebula-pass}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      CACHE_TTL: ${CACHE_TTL:-30}
+    expose: ["5000"]
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [app-network]
+    healthcheck:
+      test: ["CMD","python","-c","import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
+
+  mariadb:
+    image: mariadb:11.4
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root-secret}
+      MARIADB_DATABASE: ${DB_NAME:-nebula}
+      MARIADB_USER: ${DB_USER:-nebula}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-nebula-pass}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+      - ./mariadb/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks: [app-network]
+    healthcheck:
+      test: ["CMD","healthcheck.sh","--connect","--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 768M
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server","--save","","--appendonly","no"]
+    networks: [app-network]
+    healthcheck:
+      test: ["CMD","redis-cli","ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mariadb-data:
+

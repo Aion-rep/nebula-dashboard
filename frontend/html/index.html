@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nebula Cloud Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="mark">N</div><div><b>Nebula</b><small>Cloud Console</small></div></div>
+  <div class="project"><span class="dot"></span><div><small>PROJECT</small><b>Production Cloud</b></div><span>⌄</span></div>
+  <div class="nav">
+    <div class="label">OVERVIEW</div>
+    <a class="active">◈ <span>Dashboard</span></a>
+    <a>◫ <span>Servers</span></a>
+    <a>▦ <span>Volumes</span></a>
+    <a>◇ <span>Images</span></a>
+    <div class="label">NETWORK</div>
+    <a>⌁ <span>Networks</span></a>
+    <a>◌ <span>Routers</span></a>
+    <a>⌗ <span>Security Groups</span></a>
+    <div class="label">OPERATIONS</div>
+    <a>◒ <span>Activity</span></a>
+    <a>⚙ <span>Settings</span></a>
+  </div>
+  <div class="side-bottom">
+    <div class="health"><div><span class="dot"></span> Platform healthy</div><small>Core services are responding normally.</small></div>
+    <div class="user"><span class="avatar">A</span><div><b>Admin</b><small>admin@nebula.local</small></div></div>
+  </div>
+</aside>
+
+<main>
+<header>
+  <div><small class="eyebrow">PRODUCTION CLOUD</small><h1>Dashboard</h1></div>
+  <div class="actions"><div class="search">⌕ <input id="search" placeholder="Search servers..."></div><button onclick="load()">↻</button><button>☾</button></div>
+</header>
+
+<section class="hero-grid">
+  <div class="hero">
+    <div><small>CLOUD HEALTH</small><h2>Everything is running smoothly.</h2><p>4 services · 3 regions · live telemetry</p></div>
+    <strong>98<small>%</small></strong>
+    <div class="bar"><i style="width:98%"></i></div>
+    <div class="meta"><span><b>99.99%</b> API uptime</span><span><b>42 ms</b> latency</span><span><b>0</b> incidents</span></div>
+  </div>
+  <div class="quick">
+    <div class="qhead">Quick actions <span>+</span></div>
+    <div class="qgrid">
+      <button onclick="alert('Demo: create server')">＋ Create server</button>
+      <button onclick="alert('Demo: attach volume')">◍ Attach volume</button>
+      <button onclick="alert('Demo: upload image')">⬆ Upload image</button>
+      <button onclick="alert('Demo: create network')">⌁ Create network</button>
+    </div>
+  </div>
+</section>
+
+<section class="kpis" id="kpis"></section>
+
+<section class="content">
+  <div class="panel">
+    <div class="panel-head"><div><small>INFRASTRUCTURE</small><h2>Recent servers</h2></div><a>View all →</a></div>
+    <div class="table-wrap"><table><thead><tr><th>Server</th><th>Region</th><th>State</th><th>Flavor</th><th>IP</th></tr></thead>
+    <tbody id="rows"></tbody></table></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><div><small>CAPACITY</small><h2>Regions</h2></div></div>
+    <div id="regions"></div>
+  </div>
+</section>
+
+<footer><span class="dot"></span> Docker Compose demo · Nginx · Flask · MariaDB · Redis</footer>
+</main>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
