@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1   # Which ArgoCD API version understands this file
+kind: Application                   # This is telling ArgoCD "manage an app for me"
+
+metadata:
+  name: nebula-dashboard            # Just a name for this Application, shows up in ArgoCD UI
+  namespace: argocd                 # This Application object itself lives in the argocd namespace
+                                     # (not the dashboard namespace — that's where it DEPLOYS to, different thing)
+
+spec:
+  project: default                  # ArgoCD groups apps into "projects" — default is fine, we're not using multiple teams/projects
+
+  source:                           # WHERE to get the files from
+    repoURL: https://github.com/Aion-rep/nebula-dashboard.git   # Your GitHub repo
+    targetRevision: main            # Which branch to watch
+    path: k8s                       # Which folder inside that repo has the YAML files
+
+  destination:                      # WHERE to deploy those files TO
+    server: https://kubernetes.default.svc   # "this same cluster" — a fixed address K8s always understands internally
+    namespace: dashboard            # Put everything into the dashboard namespace
+
+  syncPolicy:
+    automated:                      # Don't wait for me to click "sync" manually — do it automatically
+      prune: true                   # If I delete a file from the k8s/ folder in Git, delete that resource from the cluster too
+      selfHeal: true                # If someone manually changes something in the cluster (like a random kubectl edit),
+                                     # automatically undo it and match Git again — Git is "the truth"
+    syncOptions:
+      - CreateNamespace=false       # Don't auto-create the dashboard namespace — it already exists, no need
