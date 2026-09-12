@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: dashboard
+  labels:
+    app: frontend
+    app.kubernetes.io/name: frontend
+    app.kubernetes.io/part-of: dashboard
+
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: frontend
+
+  template:
+    metadata:
+      labels:
+        app: frontend
+        app.kubernetes.io/name: frontend
+        app.kubernetes.io/part-of: dashboard
+
+    spec:
+      imagePullSecrets:
+      - name: harbor-secret
+      terminationGracePeriodSeconds: 30
+
+      containers:
+      - name: frontend
+        image: repo.fiberathome.cloud/dashboard/dashboard-frontend@sha256:c71fefd4dd3ac71aa74416c654fb323aa9b13f3c278e57a9e9169c5a9f2cff0a
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+
+          limits:
+            cpu: 250m
+            memory: 256Mi
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 6
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+

@@ -1,0 +1,95 @@
+# Which Kubernetes API should interpret this YAML?
+apiVersion: apps/v1
+kind: Deployment
+# identity of the Deployment.
+metadata:
+  name: backend
+  namespace: dashboard
+# Labels are basically tags attached to the Kubernetes object.
+  labels:
+    app: backend
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: dashboard
+
+spec:
+  replicas: 2
+# This allows us to retain a limited deployment history for rollback while avoiding unlimited old ReplicaSets.
+  revisionHistoryLimit: 3
+
+# Don't stop everything and then start the new version. Gradually replace the old Pods with new Pods.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+# During an update, Kubernetes should not intentionally make any existing replica unavailable.
+      maxUnavailable: 0
+# Kubernetes can temporarily create one extra Pod above the desired replica count during the update.
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: backend
+# Whenever I need to create a backend Pod, create it according to this template.
+  template:
+    metadata:
+      labels:
+        app: backend
+
+    spec:
+      imagePullSecrets:
+        - name: harbor-secret
+
+# This gives the container 30 seconds to shut down gracefully.
+      terminationGracePeriodSeconds: 30
+
+      containers:
+        - name: backend
+          image: repo.fiberathome.cloud/dashboard/dashboard-backend:1c5a894f9ecb7f12425c54a8a692dc8b051bb521
+# If the image already exists on the node, use the existing image instead of pulling it again.
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+
+# Load environment variables from both the ConfigMap and Secret into the backend container.
+          envFrom:
+            - configMapRef:
+                name: dashboard-config
+            - secretRef:
+                name: dashboard-secret
+
+# For scheduling purposes, I need at least this amount of CPU and memory.
+          resources:
+
+            requests:
+              cpu: 100m
+              memory: 128Mi
+
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+# Is this backend ready to receive traffic?
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
+
+# Is this container still alive, or should Kubernetes restart it?
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+
+        
+
+        
+

@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mariadb
+  namespace: dashboard
+  labels:
+    app: mariadb
+    app.kubernetes.io/name: mariadb
+    app.kubernetes.io/part-of: dashboard
+
+spec:
+  serviceName: mariadb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  
+  template:
+    metadata:
+      labels:
+        app: mariadb
+        app.kubernetes.io/name: mariadb
+        app.kubernetes.io/part-of: dashboard
+
+    spec:
+      terminationGracePeriodSeconds: 60
+
+      containers:
+        - name: mariadb
+          image: mariadb:11
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: mysql
+              containerPort: 3306
+              protocol: TCP
+
+          env:
+            - name: MARIADB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dashboard-secret
+                  key: DB_ROOT_PASSWORD
+
+            - name: MARIADB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: dashboard-config
+                  key: DB_NAME
+
+            - name: MARIADB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: dashboard-config
+                  key: DB_USER
+
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dashboard-secret
+                  key: DB_PASSWORD
+
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+
+            limits:
+              cpu: "1"
+              memory: 1Gi
+
+          readinessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - 'mariadb-admin ping -h 127.0.0.1 -uroot -p"$MARIADB_ROOT_PASSWORD" --silent'
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - 'mariadb-admin ping -h 127.0.0.1 -uroot -p"$MARIADB_ROOT_PASSWORD" --silent'
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: mariadb-data
+              mountPath: /var/lib/mysql
+        
+  volumeClaimTemplates:
+    - metadata:
+        name: mariadb-data
+      spec:
+        storageClassName: rook-ceph-block
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+
+
+
